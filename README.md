@@ -155,4 +155,4 @@ Additional routes will be documented here as they are added.
 
 This project is licensed under the terms you choose (e.g., MIT). If no license is specified, consider adding one for open-source contributions or clarify that it’s a private project.
 
-© 2025 [Your Name or Company]. All rights reserved.
+© 2025 Zoni Girls, LLC. All rights reserved.
