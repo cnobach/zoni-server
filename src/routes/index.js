@@ -6,7 +6,7 @@ const catalogRoutes = require("./catalogRoutes");
 
 // Use the routes
 router.use("/catalog", catalogRoutes);
-// If you have more routes, e.g.:
-// router.use("/users", userRoutes);
+router.use('/auth', require('./authRoutes'));
+router.use('/user', require('./userRoutes'));
 
 module.exports = router;

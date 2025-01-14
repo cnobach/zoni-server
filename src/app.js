@@ -9,11 +9,6 @@ function createApp() {
   app.use(cors());
   app.use(express.json());
 
-  // Root route (just a test)
-  app.get("/", (req, res) => {
-    res.json({ message: "Zoni Server is up and running!" });
-  });
-
   // Attach main router under /api
   app.use("/api", routes);
 
