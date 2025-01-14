@@ -1,0 +1,10 @@
+[
+  {
+    "id": "1736881485690",
+    "email": "test@example.com",
+    "hashedPassword": "$2b$10$1Bu4d/n0ycYQI/w64Fd9kurAZIEO185zDi686rlS3f2xIuuDk43ba",
+    "squareCustomerId": "XN0WRDEPA8W6W81C9GKQ87KSX8",
+    "firstName": "Test",
+    "lastName": "User"
+  }
+]
