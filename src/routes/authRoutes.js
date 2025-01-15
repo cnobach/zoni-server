@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const { squareClient } = require("../config/squareClient");
-const User = require("../models/user");
+const User = require("../models/User");
 const debug = require("../helpers/debug");
 
 /*
