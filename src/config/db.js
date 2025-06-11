@@ -1,21 +1,9 @@
-require("dotenv").config();
-const { Sequelize } = require("sequelize");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient } = require("@aws-sdk/lib-dynamodb");
 
-const connectionString = process.env.DATABASE_URL;
+const REGION = process.env.AWS_REGION || "us-east-1";
 
-const sequelize = new Sequelize(connectionString, {
-  dialect: "postgres",
-  dialectOptions: {
-    ssl:
-      process.env.NODE_ENV === "prod"
-        ? { require: true, rejectUnathorized: false }
-        : false,
-  },
-});
+const ddbClient = new DynamoDBClient({ region: REGION });
+const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 
-sequelize
-  .authenticate()
-  .then(() => console.log("Connected to Postgres via Sequelize"))
-  .catch((err) => console.error("Unable to connect to DB:", err));
-
-module.exports = sequelize;
+module.exports = { ddbClient, ddbDocClient };

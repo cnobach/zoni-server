@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
 const { squareClient } = require("../config/squareClient");
-const User = require("../models/user");
 const debug = require("../helpers/debug");
+const { ddbDocClient } = require("../config/db");
+const { GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
+
+const USERS_TABLE = "Users"; // Make sure this matches your DynamoDB table name
 
 /*
 TESTING: 
@@ -15,11 +17,16 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
+    // Check if user exists in DynamoDB
+    const getUser = await ddbDocClient.send(new GetCommand({
+      TableName: USERS_TABLE,
+      Key: { email },
+    }));
+    if (getUser.Item) {
       return res.status(400).json({ error: "Email already exists." });
     }
 
+    // Create Square customer
     const { result } = await squareClient.customersApi.createCustomer({
       emailAddress: email,
       givenName: firstName,
@@ -30,18 +37,21 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = User.create({
-      email,
-      hashedPassword,
-      squareCustomerId: squareCustomer.id,
-      firstName,
-      lastName,
-    });
+    await ddbDocClient.send(new PutCommand({
+      TableName: USERS_TABLE,
+      Item: {
+        email,
+        hashedPassword,
+        squareCustomerId: squareCustomer.id,
+        firstName,
+        lastName,
+      },
+    }));
 
     return res.json({
       message: "User created successfully.",
-      userId: newUser.id,
-      squareCustomerId: newUser.squareCustomerId,
+      userId: email,
+      squareCustomerId: squareCustomer.id,
     });
   } catch (err) {
     console.error("Error registering user: ", err);
@@ -53,29 +63,33 @@ router.post("/register", async (req, res) => {
 });
 
 /*
-
+TESTING:
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"Password123"}'
-
 */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email } });
+    // Fetch user from DynamoDB
+    const getUser = await ddbDocClient.send(new GetCommand({
+      TableName: USERS_TABLE,
+      Key: { email },
+    }));
+    const user = getUser.Item;
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
     const match = await bcrypt.compare(password, user.hashedPassword);
     if (!match) {
-      res.status(401).json({ error: "Invalid email or password." });
+      return res.status(401).json({ error: "Invalid email or password." });
     }
 
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user.email,
         customerId: user.squareCustomerId,
       },
       process.env.JWT_SECRET,
@@ -84,7 +98,7 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: {
-        id: user.id,
+        id: user.email,
         email: user.email,
         squareCustomerId: user.squareCustomerId,
       },
