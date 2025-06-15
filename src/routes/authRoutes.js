@@ -7,7 +7,7 @@ const debug = require("../helpers/debug");
 const { ddbDocClient } = require("../config/db");
 const { GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
 
-const USERS_TABLE = "Users"; // Make sure this matches your DynamoDB table name
+const USERS_TABLE = "users";
 
 /*
 TESTING: 
