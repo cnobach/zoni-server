@@ -11,8 +11,18 @@ router.get("/", async (req, res) => {
   try {
     const { result } = await catalogApi.listCatalog();
 
-    // Parse the items
-    const parsedItems = parseSquareCatalog(result);
+    // Get all image objects from the catalog
+    const imageObjects = (result.objects || []).filter(obj => obj.type === "IMAGE");
+    const imageMap = {};
+    imageObjects.forEach(img => {
+      imageMap[img.id] = img.imageData && img.imageData.url;
+    });
+
+    // Parse the items and attach image URLs
+    const parsedItems = parseSquareCatalog(result).map(item => ({
+      ...item,
+      imageUrls: (item.imageIds || []).map(id => imageMap[id]).filter(Boolean),
+    }));
 
     res.json({ items: parsedItems });
   } catch (err) {
