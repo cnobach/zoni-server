@@ -17,10 +17,12 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const getUser = await ddbDocClient.send(new GetCommand({
-      TableName: USERS_TABLE,
-      Key: { email },
-    }));
+    const getUser = await ddbDocClient.send(
+      new GetCommand({
+        TableName: USERS_TABLE,
+        Key: { email },
+      })
+    );
     if (getUser.Item) {
       return res.status(400).json({ error: "Email already exists." });
     }
@@ -31,20 +33,24 @@ router.post("/register", async (req, res) => {
       familyName: lastName,
     });
     const squareCustomer = result.customer;
-    debug('Square Customer: ', squareCustomer);
+    debug("Square Customer: ", squareCustomer);
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await ddbDocClient.send(new PutCommand({
-      TableName: USERS_TABLE,
-      Item: {
-        email,
-        hashedPassword,
-        squareCustomerId: squareCustomer.id,
-        firstName,
-        lastName,
-      },
-    }));
+    await ddbDocClient.send(
+      new PutCommand({
+        TableName: USERS_TABLE,
+        Item: {
+          email,
+          hashedPassword,
+          squareCustomerId: squareCustomer.id,
+          firstName,
+          lastName,
+          role: "user", // Default role
+          joinDate: new Date().toISOString(),
+        },
+      })
+    );
 
     return res.json({
       message: "User created successfully.",
@@ -71,10 +77,12 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     // Fetch user from DynamoDB
-    const getUser = await ddbDocClient.send(new GetCommand({
-      TableName: USERS_TABLE,
-      Key: { email },
-    }));
+    const getUser = await ddbDocClient.send(
+      new GetCommand({
+        TableName: USERS_TABLE,
+        Key: { email },
+      })
+    );
     const user = getUser.Item;
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password." });
@@ -89,6 +97,7 @@ router.post("/login", async (req, res) => {
       {
         userId: user.email,
         customerId: user.squareCustomerId,
+        role: user.role,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -99,18 +108,18 @@ router.post("/login", async (req, res) => {
         id: user.email,
         email: user.email,
         squareCustomerId: user.squareCustomerId,
-        firstName: user.firstName, 
+        firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
+        joinDate: user.joinDate,
       },
     });
   } catch (err) {
     console.error("Error logging in: ", err);
-    res
-      .status(500)
-      .json({
-        error:
-          "An error occurred on our end while logging in, please try again later.",
-      });
+    res.status(500).json({
+      error:
+        "An error occurred on our end while logging in, please try again later.",
+    });
   }
 });
 
