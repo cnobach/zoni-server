@@ -17,7 +17,6 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    // Check if user exists in DynamoDB
     const getUser = await ddbDocClient.send(new GetCommand({
       TableName: USERS_TABLE,
       Key: { email },
@@ -26,7 +25,6 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already exists." });
     }
 
-    // Create Square customer
     const { result } = await squareClient.customersApi.createCustomer({
       emailAddress: email,
       givenName: firstName,
@@ -101,6 +99,8 @@ router.post("/login", async (req, res) => {
         id: user.email,
         email: user.email,
         squareCustomerId: user.squareCustomerId,
+        firstName: user.firstName, 
+        lastName: user.lastName,
       },
     });
   } catch (err) {
